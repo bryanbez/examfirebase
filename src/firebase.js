@@ -237,6 +237,16 @@ export const searchStudent = async searchKeyword => {
 	//return listStudentsByExamCode.value;
 };
 
+export const countPendingRequest = async arrQuery => {
+	const getPendingRequest = loadStudentsByExamCodeOfTeacher(arrQuery);
+	return getPendingRequest;
+};
+
+export const countToCheckRequest = async arrQuery => {
+	const getToCheckRequest = loadStudentsByExamCodeOfTeacher(arrQuery);
+	return getToCheckRequest;
+};
+
 export const fetchStudentsEnrolledFb = async examCode => {
 	const listStudentsEnrolledByExamCode = ref([]);
 	const getStudentIds = ref([]);
@@ -605,4 +615,73 @@ export const fetchExamResultByRequestId = async studNameAndReqId => {
 
 		return arrResultExamInfo;
 	}
+};
+
+// dashboard
+
+export const fetchCountOfEnrolledStudents = async teacher_email => {
+	let arrStudentId = ref([]);
+	let arrExamId = [];
+	//let uniqueCount = "";
+
+	await examsdb
+		.where("teacher_email", "==", teacher_email)
+		.get()
+		.then(querySnapshot => {
+			querySnapshot.forEach(doc => {
+				arrExamId.push(doc.data()["exam_code"]);
+			});
+		});
+
+	arrExamId.forEach(value => {
+		requestexamdb
+			.where("exam_code", "==", value)
+			.get()
+			.then(querySnapshot => {
+				querySnapshot.forEach(doc => {
+					arrStudentId.value.splice(
+						arrStudentId.value.length,
+						0,
+						doc.data()["student_id"]
+					);
+				});
+			});
+	});
+	return arrStudentId.value;
+};
+
+export const fetchRequestTodayFb = async arrQuery => {
+	let fetchExamInfoToday = [];
+	let withStudentInfo = ref([]);
+
+	await requestexamdb
+		.where(arrQuery.field, "==", arrQuery.value)
+		.limit(3)
+		.get()
+		.then(querySnapshot => {
+			querySnapshot.forEach(doc => {
+				fetchExamInfoToday.push(doc.data());
+			});
+		});
+	if (fetchExamInfoToday.length != 0) {
+		fetchExamInfoToday.forEach(value => {
+			getUser(value.student_id).then(userInfo => {
+				withStudentInfo.value.push({
+					student_name:
+						userInfo.last_name +
+						", " +
+						userInfo.first_name +
+						" " +
+						userInfo.middle_initial +
+						". ",
+					timeRequested: value.timeRequested,
+					dateRequested: value.dateRequested,
+					student_id: value.student_id,
+					status_of_request: value.status_of_request
+				});
+			});
+		});
+	}
+
+	return withStudentInfo.value;
 };

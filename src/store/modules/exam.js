@@ -18,7 +18,11 @@ import {
 	saveExamResultFb,
 	fetchExamResultByRequestId,
 	searchStudent,
-	fetchStudentsEnrolledFb
+	fetchStudentsEnrolledFb,
+	fetchCountOfEnrolledStudents,
+	countPendingRequest,
+	countToCheckRequest,
+	fetchRequestTodayFb
 } from "@/firebase";
 import router from "../../routes/routes";
 
@@ -37,7 +41,11 @@ const getDefaultState = () => {
 		singleExamToCompareStudentSide: [],
 		listTotalScoreOfStudent: [],
 		listSingleExamResult: [],
-		arrStudentsEnrolled: []
+		arrStudentsEnrolled: [],
+		studentsEnrolledCount: "",
+		pendingRequestCount: "",
+		toCheckExamCount: "",
+		requestToday: []
 	};
 };
 
@@ -62,6 +70,7 @@ const actions = {
 	},
 	async fetchAllExamsInTeacher({ commit }, queryArr) {
 		let fetchExamListByTeacherEmail = await loadExamsByTeacher(queryArr);
+		console.log(fetchExamListByTeacherEmail);
 		commit("PUSH_EXAM_LIST_ARR", fetchExamListByTeacherEmail.value);
 	},
 	async fetchAllExamsInStudent({ commit }, queryArr) {
@@ -217,6 +226,25 @@ const actions = {
 		let getStudentsEnrolled = await fetchStudentsEnrolledFb(examCode);
 		commit("PUSH_STUDENTS_ENROLLED", getStudentsEnrolled);
 	},
+	// for dashboard
+	async getStudentCountEnrolled({ commit }, teacherEmail) {
+		let getCountOfEnrolledStudents = await fetchCountOfEnrolledStudents(
+			teacherEmail
+		);
+		commit("SET_ENROLLED_STUENTS_COUNT", getCountOfEnrolledStudents);
+	},
+	async fetchAllPendingRequest({ commit }, arrQuery) {
+		let getPendingRequestCount = await countPendingRequest(arrQuery);
+		commit("PENDING_REQUEST_COUNT", getPendingRequestCount);
+	},
+	async fetchAllToCheckExam({ commit }, arrQuery) {
+		let getToRequestCount = await countToCheckRequest(arrQuery);
+		commit("TO_CHECK_COUNT", getToRequestCount);
+	},
+	async fetchRequestToday({ commit }, arrQuery) {
+		let getRequestToday = await fetchRequestTodayFb(arrQuery);
+		commit("PUSH_REQUEST_TODAY", getRequestToday);
+	},
 	emptyListExams({ commit }) {
 		commit("PUT_ALL_REQUESTED_EXAM_BY_STUDENT_ID", []);
 	},
@@ -260,12 +288,19 @@ const mutations = {
 	SET_SCORES_INFO: (state, response) => {
 		state.listTotalScoreOfStudent = response;
 	},
+
 	PUT_SINGLE_RESULT_INFO: (state, response) => {
 		state.listSingleExamResult = response;
 	},
 	PUSH_STUDENTS_ENROLLED: (state, response) => {
 		state.arrStudentsEnrolled = response;
 	},
+	SET_ENROLLED_STUENTS_COUNT: (state, count) => {
+		return (state.studentsEnrolledCount = count);
+	},
+	PENDING_REQUEST_COUNT: (state, count) => (state.pendingRequestCount = count),
+	TO_CHECK_COUNT: (state, count) => (state.toCheckExamCount = count),
+	PUSH_REQUEST_TODAY: (state, response) => (state.requestToday = response),
 	RESET_STATE: state => {
 		Object.assign(state, getDefaultState());
 	}

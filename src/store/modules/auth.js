@@ -78,7 +78,6 @@ const actions = {
 			commit("SET_USER_TYPE", fetchUserTypeValue[0].userInfo);
 		}
 	},
-
 	async clearErrorMessage({ commit }) {
 		commit("SET_ERROR_MSG", "");
 	}
